@@ -12,6 +12,7 @@ import subprocess
 import queue
 import time
 import os.path
+import re
 import logging
 from TPWUtils import Logger
 from TPWUtils.INotify import INotify
@@ -106,9 +107,10 @@ class PushTo(Thread):
             q.task_done()
 
 class MonitorRemote(Thread):
-    def __init__(self, src:str, args:ArgumentParser) -> None:
+    def __init__(self, hostname:str, directory:str, args:ArgumentParser) -> None:
         Thread.__init__(self, "monitor_" + src, args)
-        (self.__hostname, self.__directory) = src.split(":", 1)
+        self.__hostname = hostname
+        self.__directory = directory
         self.queue = queue.Queue()
 
     def runIt(self) -> None: # Called on start
@@ -121,7 +123,10 @@ class MonitorRemote(Thread):
                 args.ssh,
                 hostname,
                 args.monitorRemote,
+                "--verbose",
+                "--logfile", "~/logs/monitorRemote.log",
                 directory,
+                str(args.pullDelay)
                 )
 
         for cnt in range(args.retries):
@@ -132,7 +137,18 @@ class MonitorRemote(Thread):
                 while True:
                     line = proc.stdout.readline()
                     if not line: break
-                    logging.info("line %s", line)
+                    matches = re.match(b"^:(.+)\s+$", line)
+                    if not matches:
+                        logging.info("unmatched line %s", line)
+                        continue
+                    try:
+                        fn = str(matches[1], "utf-8")
+                    except:
+                        fn = matches[1]
+
+                    logging.info("Sending %s", fn)
+                    q.put(fn)
+
             logging.info("Retry %s/%s sleeping for %s", cnt, args.retries, args.retrySleep)
             time.sleep(args.retrySleep)
             q.put((time.time(), None))
@@ -179,42 +195,36 @@ class PullFrom(Thread):
         args = self.args
         tgt = self.__dirRoot
         src = self.__source
+        (hostname, directory) = src.split(":", 1)
         sleepTime = self.args.pullDelay
         logging.info("Starting tgt %s src %s with delay %s", tgt, src, sleepTime)
 
-        monitor = MonitorRemote(src, args)
+        monitor = MonitorRemote(hostname, directory, args)
         monitor.start()
         q = monitor.queue
 
         self.rsyncFrom(src, tgt) # Do an initial sync to know where we're starting at
 
         while True:
-            (t0, fn) = q.get()
-            logging.info("remote filename %s t0 %s", fn, t0)
-            q.task_done()
-            continue
-            dirname = fn if os.path.isdir(fn) else os.path.dirname(fn)
-            sources.add(dirname)
-            dt = max(t0 - time.time() + sleepTime, 0.1)
-            logging.info("Sleeping for %s seconds due to %s", dt, fn)
-            time.sleep(dt)
-            while not q.empty():
-                (t0, fn) = q.get()
-                dirname = fn if os.path.isdir(fn) else os.path.dirname(fn)
-                sources.add(dirname)
+            path = q.get()
+            if isinstance(path, str):
+                if path == ".":
+                    srcPath = directory
+                    tgtPath = tgt
+                else:
+                    srcPath = os.path.join(directory, path)
+                    tgtPath = os.path.join(tgt, path)
+                srcPath = hostname + ":" + srcPath
+            else:
+                if path == b".":
+                    srcPath = directory
+                    tgtPath = tgt
+                else:
+                    srcPath = os.path.join(bytes(directory, "utf-8"), path)
+                    tgtPath = os.path.join(bytes(tgt, "utf-8"), path)
+                srcPath = bytes(hostname, "utf-8") + b":" + srcPath
 
-            src = os.path.commonpath(sources) # Common path for all updated files
-            relpath = os.path.relpath(src, start=dirRoot) # Strip off root portion of path
-
-            qClearSources = True
-
-            for tgt in targets:
-                if relpath != ".": tgt = os.path.join(tgt, relpath)
-                if not self.rsyncTo(src, tgt):
-                    qClearSources = False
-
-            if qClearSources: sources = set()
-
+            self.rsyncFrom(srcPath, tgtPath)
             q.task_done()
 
 parser = ArgumentParser()
@@ -224,7 +234,7 @@ grp = parser.add_argument_group(description="Push related options")
 grp.add_argument("--pushDelay", type=float, default=20,
                     help="Seconds to delay pushing after a file has been modified.")
 grp = parser.add_argument_group(description="Pull related options")
-grp.add_argument("--pullDelay", type=float, default=600,
+grp.add_argument("--pullDelay", type=float, default=20,
                     help="Seconds between attempts to pull from host")
 grp.add_argument("--bwlimit", type=str, help="Rsync --bw-limit RATE argument")
 grp = parser.add_argument_group(description="Remote monitor related options")
