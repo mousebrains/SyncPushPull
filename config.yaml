@@ -1,12 +1,12 @@
 # Configure host mapping
 
-~/Sync/Ship: 
-# pushTo: 
-# - pi11:Sync/Ship # on LAN
-# - arcterx:Sync/Ship # off ship
+~/Sync/Ship:
+  pushTo:
+    - pi11:Sync/Ship # on LAN
+    - arcterx:Sync/Ship # off ship
 
 ~/Sync/Shore:
-  # pushTo: 
-  # - pi11:Sync/Shore # LAN
-  pullFrom: 
-  - arcterx:Sync/Shore
+  pushTo: 
+    - pi11:Sync/Shore # LAN
+  pullFrom:
+    - arcterx:Sync/Shore
