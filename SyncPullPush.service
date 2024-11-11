@@ -1,0 +1,23 @@
+#
+# Sync from/to shore and local servers
+#
+# Nov-2024, Pat Welch, pat@mousebrains.com
+
+[Unit]
+Description=Sync to/from shore
+
+[Service]
+# type=simple
+User=pat
+Group=pat
+
+workingDirectory=/home/pat/logs
+ExecStart=/home/pat/ARCTERX2025/SyncPushPull/syncit.py \
+	--config=/home/pat/ARCTERX2025/SyncPushPull/config.yaml \
+	--logfile=/home/pat/logs/SyncPushPull.log
+
+Restart=always
+RestartSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+#! /bin/bash
+#
+# Install SyncPushPul.service
+#
+# Nov-2024, Pat Welch, pat@mousebrains.com
+
+myPath=`dirname $0`
+
+$myPath/TPWUtils/install.py \
+	--verbose \
+	--service SyncPullPush.service \
+	$*
+
