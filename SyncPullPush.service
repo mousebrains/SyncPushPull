@@ -14,6 +14,7 @@ Group=pat
 workingDirectory=/home/pat/logs
 ExecStart=/home/pat/ARCTERX2025/SyncPushPull/syncit.py \
 	--config=/home/pat/ARCTERX2025/SyncPushPull/config.yaml \
+	--verbose \
 	--logfile=/home/pat/logs/SyncPushPull.log
 
 Restart=always
