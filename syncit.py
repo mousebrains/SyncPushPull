@@ -238,7 +238,8 @@ grp.add_argument("--pullDelay", type=float, default=20,
                     help="Seconds between attempts to pull from host")
 grp.add_argument("--bwlimit", type=str, help="Rsync --bw-limit RATE argument")
 grp = parser.add_argument_group(description="Remote monitor related options")
-grp.add_argument("--monitorRemote", type=str, default="SyncPushPull/monitorRemote.py",
+grp.add_argument("--monitorRemote", type=str, 
+                 default=os.path.join(os.path.dirname(__file__), "monitorRemote.py"),
                  help="Path on remote host to get modified files")
 grp.add_argument("--retries", type=int, default=100,
                  help="How many ssh reconnect attempts before throwing an exception")
