@@ -8,7 +8,6 @@
 
 from argparse import ArgumentParser
 from TPWUtils.INotify import INotify
-import sys
 import time
 import os.path
 import logging
@@ -43,9 +42,9 @@ try:
             q.task_done()
             sources.add(fn if os.path.isdir(fn) else os.path.dirname(fn))
         src = os.path.commonpath(sources)
-        logging.info("Sending %s", src)
-        print(f"src:{src}")
-        sys.stdout.flush() # Force to be sent
+        path = os.path.relpath(src, start=tgt)
+        logging.info("Sending %s", path)
+        print(f":{path}", flush=True)
         q.task_done()
 except:
     logging.exception("Unexpected exception")
