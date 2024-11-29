@@ -207,7 +207,8 @@ class PullFrom(Thread):
 
         while True:
             path = q.get()
-            if isinstance(path, str):
+            try:
+                path = str(path, "UTF-8")
                 if path == ".":
                     srcPath = directory
                     tgtPath = tgt
@@ -215,16 +216,9 @@ class PullFrom(Thread):
                     srcPath = os.path.join(directory, path)
                     tgtPath = os.path.join(tgt, path)
                 srcPath = hostname + ":" + srcPath
-            else:
-                if path == b".":
-                    srcPath = directory
-                    tgtPath = tgt
-                else:
-                    srcPath = os.path.join(bytes(directory, "utf-8"), path)
-                    tgtPath = os.path.join(bytes(tgt, "utf-8"), path)
-                srcPath = bytes(hostname, "utf-8") + b":" + srcPath
-
-            self.rsyncFrom(srcPath, tgtPath)
+                self.rsyncFrom(srcPath, tgtPath)
+            except:
+                logging.warning("Unable to convert %s to str", path)
             q.task_done()
 
 parser = ArgumentParser()
