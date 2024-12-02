@@ -124,7 +124,7 @@ class MonitorRemote(Thread):
                 hostname,
                 args.monitorRemote,
                 "--verbose",
-                "--logfile", "~/logs/monitorRemote.log",
+                "--logfile", os.path.abspath(os.path.expanduser("~/logs/monitorRemote.log")),
                 directory,
                 str(args.pullDelay)
                 )
@@ -218,7 +218,7 @@ class PullFrom(Thread):
                 srcPath = hostname + ":" + srcPath
                 self.rsyncFrom(srcPath, tgtPath)
             except:
-                logging.warning("Unable to convert %s to str", path)
+                logging.exception("Unable to convert %s to str", path)
             q.task_done()
 
 parser = ArgumentParser()
@@ -244,6 +244,8 @@ grp.add_argument("--ssh", type=str, default="/usr/bin/ssh", help="ssh command to
 grp.add_argument("--rsync", type=str, default="/usr/bin/rsync", help="rsync command to use")
 grp.add_argument("--cache", type=str, default="~/.cache", help="rsync --temp-dir")
 args = parser.parse_args()
+
+args.cache = os.path.abspath(os.path.expanduser(args.cache))
 
 Logger.mkLogger(args)
 
