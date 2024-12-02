@@ -30,7 +30,6 @@ class PushTo(Thread):
                 "--verbose",
                 "--archive",
                 "--temp-dir", self.args.cache,
-                "--delay-updates",
                 "--delete-delay",
                 os.path.join(src, ""), # Add trailing slash
                 tgt,
@@ -166,7 +165,6 @@ class PullFrom(Thread):
                 "--verbose",
                 "--archive",
                 "--temp-dir", os.path.abspath(os.path.expanduser(self.args.cache)),
-                "--delay-updates",
                 "--delete-delay",
                 os.path.join(src, ""), # Add trailing slash
                 tgt,
