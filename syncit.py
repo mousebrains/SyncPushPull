@@ -206,7 +206,8 @@ class PullFrom(Thread):
         while True:
             path = q.get()
             try:
-                path = str(path, "UTF-8")
+                if ~isinstance(path, str):
+                    path = str(path, "UTF-8")
                 if path == ".":
                     srcPath = directory
                     tgtPath = tgt
