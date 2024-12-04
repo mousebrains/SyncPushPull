@@ -150,8 +150,7 @@ class MonitorRemote(Thread):
 
             logging.info("Retry %s/%s sleeping for %s", cnt, args.retries, args.retrySleep)
             time.sleep(args.retrySleep)
-            q.put((time.time(), None))
-        logging.info("Exiting")
+        raise Exception("Fell through on monitor remote")
 
 class PullFrom(Thread):
     def __init__(self, dirname:str, src:str, args:ArgumentParser) -> None:
@@ -205,6 +204,8 @@ class PullFrom(Thread):
 
         while True:
             path = q.get()
+            q.task_done()
+            if path is None: continue
             try:
                 if not isinstance(path, str):
                     path = str(path, "UTF-8")
@@ -218,7 +219,6 @@ class PullFrom(Thread):
                 self.rsyncFrom(srcPath, tgtPath)
             except:
                 logging.exception("Unable to convert %s to str", path)
-            q.task_done()
 
 parser = ArgumentParser()
 Logger.addArgs(parser)
